@@ -1,1 +1,1231 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>A Question For You</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; } html, body { width: 100%; height: 100%; overflow: hidden; } body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient( 135deg, #ffdde1, #ff9a9e, #fecfef, #ffc3a0 ); background-size: 400% 400%; animation: gradientShift 10s ease infinite; display: flex; align-items: center; justify-content: center; position: relative; padding: 20px; text-align: center; } /* ============================== BACKGROUND ============================== */ @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } } .heart { position: absolute; top: 100%; color: rgba(255,255,255,0.75); pointer-events: none; user-select: none; z-index: 1; animation: floatUp linear infinite; } @keyframes floatUp { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; } } /* ============================== CARD ============================== */ .card { background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); border-radius: 28px; padding: 36px 24px; width: 100%; max-width: 380px; box-shadow: 0 20px 40px rgba(255,105,135,0.35); position: relative; z-index: 2; animation: popIn 0.7s ease; } @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } } /* ============================== EMOJI ============================== */ .emoji-top { font-size: 46px; margin-bottom: 8px; display: inline-block; animation: bounce 1.6s ease-in-out infinite; } @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } } /* ============================== TEXT ============================== */ h1 { font-size: 26px; color: #d6336c; margin-bottom: 6px; line-height: 1.3; } .name { background: linear-gradient( 90deg, #ff5e78, #ff8fab ); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; } .subtitle { font-size: 15px; color: #a83a5e; margin-bottom: 28px; font-weight: 500; } /* ============================== BUTTON AREA ============================== */ .btn-row { display: flex; justify-content: center; align-items: center; gap: 18px; min-height: 60px; position: relative; } button { border: none; outline: none; font-family: inherit; font-size: 17px; font-weight: 700; padding: 14px 28px; border-radius: 50px; cursor: pointer; } /* ============================== YES ============================== */ #yesBtn { background: linear-gradient( 135deg, #ff5e78, #ff8fab ); color: white; box-shadow: 0 10px 20px rgba(255,94,120,0.4); position: relative; z-index: 5; /* IMPORTANT: No transform / size changing. */ transition: transform 0.15s ease; } #yesBtn:active { transform: scale(0.95); } /* ============================== NO ============================== */ #noBtn { background: #ffe3e9; color: #d6336c; position: relative; z-index: 9999; /* IMPORTANT: Never allow text/button size to change. */ width: 82px; height: 50px; padding: 0; flex-shrink: 0; touch-action: none; user-select: none; -webkit-user-select: none; white-space: nowrap; cursor: pointer; /* Fast movement. */ transition: left 0.04s linear, top 0.04s linear; } /* ============================== HINT ============================== */ .hint { margin-top: 18px; font-size: 12.5px; color: #c17a94; opacity: 0.8; } /* ============================== RESULT ============================== */ #result { display: none; margin-top: 26px; animation: popIn 0.5s ease; } #result .big-emoji { font-size: 54px; margin-bottom: 10px; } #result p { color: #d6336c; font-weight: 700; font-size: 19px; } /* ============================== MOBILE ============================== */ @media (max-width: 480px) { .card { padding: 28px 18px; } .btn-row { gap: 12px; } h1 { font-size: 24px; } } </style> </head> <body> <div class="card" id="mainCard"> <div class="emoji-top"> 💌 </div> <h1> Hey cutie🥺 <span class="name"> pls pls </span>, </h1> <h1 style=" font-size:21px; margin-bottom:0; "> will you be my gf? please🥺🥺🥺 </h1> <p class="subtitle"> . </p> <div class="btn-row" id="btnRow"> <button id="yesBtn" onclick="sayYes()"> Yes </button> <button id="noBtn"> No </button> </div> <p class="hint" id="hintText"> psst, try clicking "No" 😏 </p> <div id="result"> <div class="big-emoji"> 🥹💗🎉 </div> <p> Yayyy! I knew it 😄 <br> . </p> </div> </div> <script> /* ================================== FLOATING HEARTS ================================== */ const heartsToUse = [ "💗", "💕", "💖", "💓", "💞", "🩷" ]; for ( let i = 0; i < 22; i++ ) { const heart = document.createElement("div"); heart.className = "heart"; heart.textContent = heartsToUse[ Math.floor( Math.random() * heartsToUse.length ) ]; heart.style.left = Math.random() * 100 + "vw"; heart.style.fontSize = ( 14 + Math.random() * 20 ) + "px"; heart.style.animationDuration = ( 5 + Math.random() * 7 ) + "s"; heart.style.animationDelay = ( Math.random() * 8 ) + "s"; document.body.appendChild( heart ); } /* ================================== ELEMENTS ================================== */ const noBtn = document.getElementById( "noBtn" ); const hintText = document.getElementById( "hintText" ); /* ================================== SETTINGS ================================== */ /* How close the mouse can get. Larger = harder to catch. */ const ESCAPE_DISTANCE = 190; /* Minimum distance from screen edge. */ const EDGE = 10; /* ================================== MESSAGES ================================== */ const messages = [ 'psst, try clicking "No" 😏', "Nice try 😏", "Nope 🙅‍♀️", "Catch me if you can 🏃‍♀️", "Come onnn 😩", "Too slow 😂", "Almost got me 🙈", "Still trying? 😌", "No chance 😏", "Just click Yes 🥺", "You cannot catch me 😂", "Give up already 😭", "No is unavailable 💗" ]; /* ================================== DODGE COUNTER ================================== */ let dodgeCount = 0; /* ================================== FIND SAFE POSITION ================================== */ function findSafePosition( mouseX, mouseY ) { const buttonWidth = noBtn.offsetWidth; const buttonHeight = noBtn.offsetHeight; const maxX = window.innerWidth - buttonWidth - EDGE; const maxY = window.innerHeight - buttonHeight - EDGE; /* Try MANY positions. */ for ( let attempt = 0; attempt < 500; attempt++ ) { const x = EDGE + Math.random() * Math.max( 1, maxX - EDGE ); const y = EDGE + Math.random() * Math.max( 1, maxY - EDGE ); const centerX = x + buttonWidth / 2; const centerY = y + buttonHeight / 2; const distance = Math.hypot( centerX - mouseX, centerY - mouseY ); /* Also make sure the button is not directly under the mouse. */ if ( distance > ESCAPE_DISTANCE ) { return { x: x, y: y }; } } /* Fallback: put button on the opposite side of the screen. */ let x = window.innerWidth - buttonWidth - EDGE; let y = window.innerHeight - buttonHeight - EDGE; /* If that happens to be near mouse, use top-left. */ if ( Math.hypot( x + buttonWidth / 2 - mouseX, y + buttonHeight / 2 - mouseY ) < ESCAPE_DISTANCE ) { x = EDGE; y = EDGE; } return { x: x, y: y }; } /* ================================== MOVE BUTTON ================================== */ function escapeNo( mouseX, mouseY ) { dodgeCount++; /* Change message. This has NO LIMIT on how many times the button can move. */ hintText.textContent = messages[ Math.min( dodgeCount - 1, messages.length - 1 ) ]; /* Switch to fixed positioning. */ noBtn.style.position = "fixed"; noBtn.style.zIndex = "99999"; /* Find safe location. */ const position = findSafePosition( mouseX, mouseY ); /* Move it. */ noBtn.style.left = position.x + "px"; noBtn.style.top = position.y + "px"; } /* ================================== MOUSE TRACKING ================================== */ let lastMouseX = 0; let lastMouseY = 0; document.addEventListener( "mousemove", function(e) { lastMouseX = e.clientX; lastMouseY = e.clientY; /* Get current button position. */ const rect = noBtn.getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2; const distance = Math.hypot( centerX - e.clientX, centerY - e.clientY ); /* Escape before mouse reaches it. */ if ( distance < ESCAPE_DISTANCE ) { escapeNo( e.clientX, e.clientY ); } } ); /* ================================== MOUSE ENTER SAFETY ================================== */ noBtn.addEventListener( "mouseenter", function(e) { escapeNo( e.clientX, e.clientY ); } ); /* ================================== CLICK SAFETY ================================== */ noBtn.addEventListener( "click", function(e) { e.preventDefault(); e.stopPropagation(); escapeNo( e.clientX || lastMouseX, e.clientY || lastMouseY ); } ); /* ================================== MOBILE TOUCH ================================== */ noBtn.addEventListener( "touchstart", function(e) { e.preventDefault(); const touch = e.touches[0]; if (!touch) { return; } escapeNo( touch.clientX, touch.clientY ); }, { passive: false } ); /* ================================== MOBILE TOUCH MOVE ================================== */ noBtn.addEventListener( "touchmove", function(e) { e.preventDefault(); const touch = e.touches[0]; if (!touch) { return; } escapeNo( touch.clientX, touch.clientY ); }, { passive: false } ); /* ================================== WINDOW RESIZE ================================== */ window.addEventListener( "resize", function() { /* If the button is currently fixed, make sure it remains inside the new viewport. */ if ( noBtn.style.position === "fixed" ) { const rect = noBtn.getBoundingClientRect(); let x = rect.left; let y = rect.top; const maxX = window.innerWidth - noBtn.offsetWidth - EDGE; const maxY = window.innerHeight - noBtn.offsetHeight - EDGE; x = Math.max( EDGE, Math.min( x, maxX ) ); y = Math.max( EDGE, Math.min( y, maxY ) ); noBtn.style.left = x + "px"; noBtn.style.top = y + "px"; } } ); /* ================================== YES ================================== */ function sayYes() { /* Hide buttons. */ document.getElementById( "btnRow" ).style.display = "none"; hintText.style.display = "none"; noBtn.style.display = "none"; /* Show result. */ document.getElementById( "result" ).style.display = "block"; /* Heart celebration. */ for ( let i = 0; i < 30; i++ ) { const heart = document.createElement( "div" ); heart.className = "heart"; heart.textContent = heartsToUse[ Math.floor( Math.random() * heartsToUse.length ) ]; heart.style.left = Math.random() * 100 + "vw"; heart.style.fontSize = ( 16 + Math.random() * 24 ) + "px"; heart.style.animationDuration = ( 3 + Math.random() * 4 ) + "s"; heart.style.animationDelay = ( Math.random() * 1.5 ) + "s"; document.body.appendChild( heart ); } } </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no">
+
+<title>A Question For You</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffdde1,
+            #ff9a9e,
+            #fecfef,
+            #ffc3a0
+        );
+
+    background-size: 400% 400%;
+
+    animation:
+        gradientShift 10s ease infinite;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    padding: 20px;
+
+    text-align: center;
+}
+
+
+/* ==============================
+   BACKGROUND
+============================== */
+
+@keyframes gradientShift {
+
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
+.heart {
+
+    position: absolute;
+
+    top: 100%;
+
+    color: rgba(255,255,255,0.75);
+
+    pointer-events: none;
+
+    user-select: none;
+
+    z-index: 1;
+
+    animation:
+        floatUp linear infinite;
+}
+
+
+@keyframes floatUp {
+
+    0% {
+        transform:
+            translateY(0)
+            rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform:
+            translateY(-110vh)
+            rotate(360deg);
+        opacity: 0;
+    }
+}
+
+
+/* ==============================
+   CARD
+============================== */
+
+.card {
+
+    background:
+        rgba(255,255,255,0.85);
+
+    backdrop-filter: blur(8px);
+
+    border-radius: 28px;
+
+    padding: 36px 24px;
+
+    max-width: 380px;
+
+    width: 100%;
+
+    box-shadow:
+        0 20px 40px
+        rgba(255,105,135,0.35);
+
+    z-index: 2;
+
+    position: relative;
+
+    animation:
+        popIn 0.7s ease;
+}
+
+
+@keyframes popIn {
+
+    0% {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+/* ==============================
+   EMOJI
+============================== */
+
+.emoji-top {
+
+    font-size: 46px;
+
+    margin-bottom: 8px;
+
+    display: inline-block;
+
+    animation:
+        bounce 1.6s ease-in-out infinite;
+}
+
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+
+/* ==============================
+   TEXT
+============================== */
+
+h1 {
+
+    font-size: 26px;
+
+    color: #d6336c;
+
+    margin-bottom: 6px;
+
+    line-height: 1.3;
+}
+
+
+.name {
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff5e78,
+            #ff8fab
+        );
+
+    -webkit-background-clip: text;
+
+    background-clip: text;
+
+    color: transparent;
+
+    font-weight: 800;
+}
+
+
+.subtitle {
+
+    font-size: 15px;
+
+    color: #a83a5e;
+
+    margin-bottom: 28px;
+
+    font-weight: 500;
+}
+
+
+/* ==============================
+   BUTTON AREA
+============================== */
+
+.btn-row {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 18px;
+
+    min-height: 60px;
+
+    position: relative;
+}
+
+
+button {
+
+    border: none;
+
+    outline: none;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    padding: 14px 28px;
+
+    border-radius: 50px;
+
+    cursor: pointer;
+
+    font-family: inherit;
+}
+
+
+/* ==============================
+   YES BUTTON
+============================== */
+
+#yesBtn {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ff5e78,
+            #ff8fab
+        );
+
+    color: white;
+
+    box-shadow:
+        0 10px 20px
+        rgba(255,94,120,0.4);
+
+    position: relative;
+
+    z-index: 5;
+}
+
+
+/* ==============================
+   NO BUTTON
+============================== */
+
+#noBtn {
+
+    background: #ffe3e9;
+
+    color: #d6336c;
+
+    /*
+       IMPORTANT:
+       Fixed from the very beginning.
+       Never switches position type.
+    */
+
+    position: fixed;
+
+    z-index: 999999;
+
+    width: 82px;
+
+    height: 50px;
+
+    padding: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    /*
+       No transition.
+       This prevents disappearing/
+       repaint problems.
+    */
+
+    transition: none;
+
+    touch-action: none;
+
+    user-select: none;
+
+    -webkit-user-select: none;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    /*
+       transform is used for movement.
+    */
+
+    left: 0;
+
+    top: 0;
+
+    will-change: transform;
+}
+
+
+/* ==============================
+   HINT
+============================== */
+
+.hint {
+
+    margin-top: 18px;
+
+    font-size: 12.5px;
+
+    color: #c17a94;
+
+    opacity: 0.8;
+}
+
+
+/* ==============================
+   RESULT
+============================== */
+
+#result {
+
+    display: none;
+
+    margin-top: 26px;
+
+    animation:
+        popIn 0.5s ease;
+}
+
+
+#result .big-emoji {
+
+    font-size: 54px;
+
+    margin-bottom: 10px;
+}
+
+
+#result p {
+
+    color: #d6336c;
+
+    font-weight: 700;
+
+    font-size: 19px;
+}
+
+
+/* ==============================
+   MOBILE
+============================== */
+
+@media (max-width: 480px) {
+
+    .card {
+        padding: 28px 18px;
+    }
+
+    .btn-row {
+        gap: 12px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="card" id="mainCard">
+
+    <div class="emoji-top">
+        💌
+    </div>
+
+    <h1>
+        Hey cutie🥺
+        <span class="name">
+            pls pls
+        </span>,
+    </h1>
+
+    <h1 style="font-size:21px; margin-bottom:0;">
+        will you be my gf? please🥺🥺🥺
+    </h1>
+
+    <p class="subtitle">
+        .
+    </p>
+
+    <div class="btn-row">
+
+        <button id="yesBtn"
+                onclick="sayYes()">
+            Yes
+        </button>
+
+        <!--
+            This button is fixed from
+            the beginning.
+        -->
+        <button id="noBtn">
+            No
+        </button>
+
+    </div>
+
+
+    <p class="hint"
+       id="hintText">
+
+        psst, try clicking "No" 😏
+
+    </p>
+
+
+    <div id="result">
+
+        <div class="big-emoji">
+            🥹💗🎉
+        </div>
+
+        <p>
+            Yayyy! I knew it 😄
+            <br>
+            .
+        </p>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* =========================================
+   FLOATING HEARTS
+========================================= */
+
+const heartsToUse = [
+    "💗",
+    "💕",
+    "💖",
+    "💓",
+    "💞",
+    "🩷"
+];
+
+
+for (let i = 0; i < 22; i++) {
+
+    const heart =
+        document.createElement("div");
+
+    heart.className = "heart";
+
+    heart.textContent =
+        heartsToUse[
+            Math.floor(
+                Math.random() *
+                heartsToUse.length
+            )
+        ];
+
+    heart.style.left =
+        Math.random() * 100 + "vw";
+
+    heart.style.fontSize =
+        (14 + Math.random() * 20) + "px";
+
+    heart.style.animationDuration =
+        (5 + Math.random() * 7) + "s";
+
+    heart.style.animationDelay =
+        (Math.random() * 8) + "s";
+
+    document.body.appendChild(heart);
+}
+
+
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const noBtn =
+    document.getElementById("noBtn");
+
+const hintText =
+    document.getElementById("hintText");
+
+
+
+/* =========================================
+   SETTINGS
+========================================= */
+
+/*
+   How early the button escapes.
+
+   200 = VERY difficult to catch.
+*/
+
+const ESCAPE_DISTANCE = 200;
+
+
+/*
+   Space from screen edge.
+*/
+
+const EDGE = 15;
+
+
+/*
+   Current button coordinates.
+*/
+
+let noX = 0;
+let noY = 0;
+
+
+/*
+   Mouse position.
+*/
+
+let mouseX = -1000;
+let mouseY = -1000;
+
+
+/*
+   Prevent repeated moves during
+   the same mouse movement.
+*/
+
+let moving = false;
+
+
+/*
+   Unlimited counter.
+*/
+
+let dodgeCount = 0;
+
+
+
+/* =========================================
+   MESSAGES
+========================================= */
+
+const messages = [
+
+    'psst, try clicking "No" 😏',
+
+    "Nice try 😏",
+
+    "Nope, not happening 🙅‍♀️",
+
+    "Catch me if you can 🏃‍♀️",
+
+    "Come onnn, click Yes already 😩",
+
+    "The No button is shy 🙈",
+
+    "Almost got me 😂",
+
+    "Too slow 😌",
+
+    "Still trying? 😂",
+
+    "No chance 😏",
+
+    "Just click Yes already 🥺",
+
+    "You cannot catch me 💗",
+
+    "Give up already 😭"
+
+];
+
+
+
+/* =========================================
+   APPLY POSITION
+========================================= */
+
+function applyNoPosition() {
+
+    noBtn.style.transform =
+        `translate3d(${noX}px, ${noY}px, 0)`;
+
+}
+
+
+
+/* =========================================
+   INITIAL POSITION
+========================================= */
+
+function placeNoButtonInitially() {
+
+    /*
+       Put No approximately where it
+       would naturally appear beside Yes.
+    */
+
+    const yesBtn =
+        document.getElementById("yesBtn");
+
+    const yesRect =
+        yesBtn.getBoundingClientRect();
+
+    const noWidth =
+        noBtn.offsetWidth;
+
+    const noHeight =
+        noBtn.offsetHeight;
+
+
+    noX =
+        yesRect.right + 18;
+
+
+    noY =
+        yesRect.top +
+        (yesRect.height - noHeight) / 2;
+
+
+    /*
+       Make sure it is inside screen.
+    */
+
+    noX =
+        Math.max(
+            EDGE,
+            Math.min(
+                noX,
+                window.innerWidth -
+                noWidth -
+                EDGE
+            )
+        );
+
+
+    noY =
+        Math.max(
+            EDGE,
+            Math.min(
+                noY,
+                window.innerHeight -
+                noHeight -
+                EDGE
+            )
+        );
+
+
+    applyNoPosition();
+}
+
+
+
+/* =========================================
+   FIND A SAFE POSITION
+========================================= */
+
+function findSafePosition(
+    pointerX,
+    pointerY
+) {
+
+    const width =
+        noBtn.offsetWidth;
+
+    const height =
+        noBtn.offsetHeight;
+
+
+    const maxX =
+        window.innerWidth -
+        width -
+        EDGE;
+
+
+    const maxY =
+        window.innerHeight -
+        height -
+        EDGE;
+
+
+    /*
+       We test a large number of random
+       locations and select one far away.
+    */
+
+    let bestX = EDGE;
+    let bestY = EDGE;
+
+    let bestDistance = 0;
+
+
+    for (let i = 0; i < 200; i++) {
+
+        const x =
+            EDGE +
+            Math.random() *
+            Math.max(
+                1,
+                maxX - EDGE
+            );
+
+
+        const y =
+            EDGE +
+            Math.random() *
+            Math.max(
+                1,
+                maxY - EDGE
+            );
+
+
+        const centerX =
+            x + width / 2;
+
+        const centerY =
+            y + height / 2;
+
+
+        const distance =
+            Math.hypot(
+                centerX - pointerX,
+                centerY - pointerY
+            );
+
+
+        /*
+           Keep the position with the
+           greatest distance.
+        */
+
+        if (distance > bestDistance) {
+
+            bestDistance = distance;
+
+            bestX = x;
+
+            bestY = y;
+        }
+
+
+        /*
+           Once sufficiently far away,
+           stop searching.
+        */
+
+        if (
+            distance >
+            ESCAPE_DISTANCE + 100
+        ) {
+
+            return {
+                x: x,
+                y: y
+            };
+
+        }
+
+    }
+
+
+    return {
+        x: bestX,
+        y: bestY
+    };
+}
+
+
+
+/* =========================================
+   ESCAPE
+========================================= */
+
+function escapeNo(
+    pointerX,
+    pointerY
+) {
+
+    if (moving) {
+        return;
+    }
+
+    moving = true;
+
+    dodgeCount++;
+
+
+    /*
+       Update message forever.
+    */
+
+    hintText.textContent =
+        messages[
+            Math.min(
+                dodgeCount - 1,
+                messages.length - 1
+            )
+        ];
+
+
+    /*
+       Find a position far away.
+    */
+
+    const position =
+        findSafePosition(
+            pointerX,
+            pointerY
+        );
+
+
+    noX = position.x;
+
+    noY = position.y;
+
+
+    /*
+       Move immediately.
+    */
+
+    applyNoPosition();
+
+
+    /*
+       Allow another escape
+       on the next event loop.
+    */
+
+    requestAnimationFrame(
+        function() {
+            moving = false;
+        }
+    );
+}
+
+
+
+/* =========================================
+   MOUSE TRACKING
+========================================= */
+
+document.addEventListener(
+    "mousemove",
+    function(e) {
+
+        mouseX = e.clientX;
+
+        mouseY = e.clientY;
+
+
+        /*
+           Get button rectangle.
+        */
+
+        const rect =
+            noBtn.getBoundingClientRect();
+
+
+        const centerX =
+            rect.left +
+            rect.width / 2;
+
+
+        const centerY =
+            rect.top +
+            rect.height / 2;
+
+
+        const distance =
+            Math.hypot(
+                centerX - mouseX,
+                centerY - mouseY
+            );
+
+
+        /*
+           If mouse gets close,
+           RUN.
+        */
+
+        if (
+            distance <
+            ESCAPE_DISTANCE
+        ) {
+
+            escapeNo(
+                mouseX,
+                mouseY
+            );
+        }
+
+    }
+);
+
+
+
+/* =========================================
+   MOUSE ENTER
+========================================= */
+
+noBtn.addEventListener(
+    "mouseenter",
+    function(e) {
+
+        escapeNo(
+            e.clientX,
+            e.clientY
+        );
+
+    }
+);
+
+
+
+/* =========================================
+   CLICK PROTECTION
+========================================= */
+
+noBtn.addEventListener(
+    "click",
+    function(e) {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+
+        escapeNo(
+            e.clientX || mouseX,
+            e.clientY || mouseY
+        );
+
+    }
+);
+
+
+
+/* =========================================
+   MOBILE TOUCH
+========================================= */
+
+noBtn.addEventListener(
+    "touchstart",
+    function(e) {
+
+        e.preventDefault();
+
+
+        const touch =
+            e.touches[0];
+
+
+        if (!touch) {
+            return;
+        }
+
+
+        escapeNo(
+            touch.clientX,
+            touch.clientY
+        );
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+
+/* =========================================
+   MOBILE TOUCH MOVE
+========================================= */
+
+noBtn.addEventListener(
+    "touchmove",
+    function(e) {
+
+        e.preventDefault();
+
+
+        const touch =
+            e.touches[0];
+
+
+        if (!touch) {
+            return;
+        }
+
+
+        escapeNo(
+            touch.clientX,
+            touch.clientY
+        );
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+
+/* =========================================
+   WINDOW RESIZE
+========================================= */
+
+window.addEventListener(
+    "resize",
+    function() {
+
+        const width =
+            noBtn.offsetWidth;
+
+        const height =
+            noBtn.offsetHeight;
+
+
+        const maxX =
+            window.innerWidth -
+            width -
+            EDGE;
+
+
+        const maxY =
+            window.innerHeight -
+            height -
+            EDGE;
+
+
+        /*
+           Keep it inside viewport.
+        */
+
+        noX =
+            Math.max(
+                EDGE,
+                Math.min(
+                    noX,
+                    maxX
+                )
+            );
+
+
+        noY =
+            Math.max(
+                EDGE,
+                Math.min(
+                    noY,
+                    maxY
+                )
+            );
+
+
+        applyNoPosition();
+
+    }
+);
+
+
+
+/* =========================================
+   YES
+========================================= */
+
+function sayYes() {
+
+    /*
+       Hide buttons.
+    */
+
+    document.getElementById(
+        "btnRow"
+    ).style.display = "none";
+
+
+    hintText.style.display = "none";
+
+
+    noBtn.style.display = "none";
+
+
+    /*
+       Show result.
+    */
+
+    document.getElementById(
+        "result"
+    ).style.display = "block";
+
+
+    /*
+       Heart celebration.
+    */
+
+    for (let i = 0; i < 30; i++) {
+
+        const heart =
+            document.createElement("div");
+
+        heart.className = "heart";
+
+        heart.textContent =
+            heartsToUse[
+                Math.floor(
+                    Math.random() *
+                    heartsToUse.length
+                )
+            ];
+
+        heart.style.left =
+            Math.random() * 100 + "vw";
+
+        heart.style.fontSize =
+            (16 + Math.random() * 24) + "px";
+
+        heart.style.animationDuration =
+            (3 + Math.random() * 4) + "s";
+
+        heart.style.animationDelay =
+            (Math.random() * 1.5) + "s";
+
+        document.body.appendChild(heart);
+    }
+
+}
+
+
+
+/* =========================================
+   START
+========================================= */
+
+/*
+   Wait until browser has calculated
+   all button dimensions.
+*/
+
+window.addEventListener(
+    "load",
+    function() {
+
+        placeNoButtonInitially();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
+
