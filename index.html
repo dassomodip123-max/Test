@@ -188,16 +188,20 @@
 </div>
 
 <script>
-  // floating hearts background
-  const heartsToUse = ["💗","💕","💖","💓","💞","🩷"];
+  // Floating hearts background
+  const heartsToUse = ["💗", "💕", "💖", "💓", "💞", "🩷"];
+
   for (let i = 0; i < 22; i++) {
     const h = document.createElement("div");
     h.className = "heart";
-    h.textContent = heartsToUse[Math.floor(Math.random() * heartsToUse.length)];
+    h.textContent =
+      heartsToUse[Math.floor(Math.random() * heartsToUse.length)];
+
     h.style.left = Math.random() * 100 + "vw";
-    h.style.fontSize = (14 + Math.random() * 20) + "px";
-    h.style.animationDuration = (5 + Math.random() * 7) + "s";
-    h.style.animationDelay = (Math.random() * 8) + "s";
+    h.style.fontSize = 14 + Math.random() * 20 + "px";
+    h.style.animationDuration = 5 + Math.random() * 7 + "s";
+    h.style.animationDelay = Math.random() * 8 + "s";
+
     document.body.appendChild(h);
   }
 
@@ -207,71 +211,151 @@
   const hintText = document.getElementById("hintText");
 
   let dodgeCount = 0;
+  let lastMove = 0;
+
   const teaseMessages = [
-    "psst, try clicking \"No\" 😏",
+    'psst, try clicking "No" 😏',
     "nice try 😏",
     "nope, not happening 🙅‍♀️",
     "catch me if you can 🏃‍♀️",
     "come onnn, click Yes already 😩",
     "the No button is shy 🙈",
     "it's just not into being clicked 😂",
-    "give up yet? 😌"
+    "give up yet? 😌",
+    "you really thought you could catch me? 😭",
+    "Nope! 😏",
+    "Almost! 😂",
+    "Still can't catch me 💕"
   ];
 
   function moveNoButton() {
-    dodgeCount++;
-    hintText.textContent = teaseMessages[Math.min(dodgeCount, teaseMessages.length - 1)];
+    const now = Date.now();
 
-    const rowRect = btnRow.getBoundingClientRect();
+    // Prevent multiple moves in the same millisecond
+    if (now - lastMove < 80) return;
+    lastMove = now;
+
+    dodgeCount++;
+
+    hintText.textContent =
+      teaseMessages[Math.min(dodgeCount - 1, teaseMessages.length - 1)];
+
     const btnW = noBtn.offsetWidth;
     const btnH = noBtn.offsetHeight;
 
-    // random position within viewport, avoiding edges
-    const maxX = window.innerWidth - btnW - 20;
-    const maxY = window.innerHeight - btnH - 20;
-    const randX = Math.max(20, Math.random() * maxX);
-    const randY = Math.max(20, Math.random() * maxY);
+    // Keep button completely inside viewport
+    const padding = 20;
+
+    const maxX = window.innerWidth - btnW - padding;
+    const maxY = window.innerHeight - btnH - padding;
+
+    const randX =
+      padding + Math.random() * Math.max(1, maxX - padding);
+
+    const randY =
+      padding + Math.random() * Math.max(1, maxY - padding);
 
     noBtn.style.position = "fixed";
     noBtn.style.left = randX + "px";
     noBtn.style.top = randY + "px";
-    noBtn.style.zIndex = "50";
+    noBtn.style.zIndex = "9999";
 
-    // grow Yes button a little each time to nudge the choice
-    const currentScale = 1 + Math.min(dodgeCount * 0.06, 0.5);
+    // Make Yes button gradually larger
+    const currentScale = 1 + Math.min(dodgeCount * 0.06, 0.6);
+
     yesBtn.style.transform = `scale(${currentScale})`;
-    yesBtn.style.fontSize = (17 + Math.min(dodgeCount, 8)) + "px";
+    yesBtn.style.fontSize =
+      17 + Math.min(dodgeCount, 10) + "px";
   }
 
-  // desktop hover dodge
-  noBtn.addEventListener("mouseenter", moveNoButton);
-  // mobile touch dodge (fires before any click can register)
-  noBtn.addEventListener("touchstart", function(e) {
-    e.preventDefault();
-    moveNoButton();
-  }, { passive: false });
 
-  // extra safety: even if somehow "clicked", do nothing
-  noBtn.addEventListener("click", function(e) {
+  /*
+   * DESKTOP:
+   * Instead of relying only on mouseenter,
+   * detect when the cursor gets close to the No button.
+   */
+  document.addEventListener("mousemove", function (e) {
+
+    if (noBtn.style.display === "none") return;
+
+    const rect = noBtn.getBoundingClientRect();
+
+    // Distance around the button that triggers the dodge
+    const dangerDistance = 80;
+
+    const closestX = Math.max(
+      rect.left,
+      Math.min(e.clientX, rect.right)
+    );
+
+    const closestY = Math.max(
+      rect.top,
+      Math.min(e.clientY, rect.bottom)
+    );
+
+    const distance = Math.hypot(
+      e.clientX - closestX,
+      e.clientY - closestY
+    );
+
+    if (distance < dangerDistance) {
+      moveNoButton();
+    }
+  });
+
+
+  /*
+   * MOBILE:
+   * Touching the No button makes it escape.
+   */
+  noBtn.addEventListener(
+    "touchstart",
+    function (e) {
+      e.preventDefault();
+      moveNoButton();
+    },
+    { passive: false }
+  );
+
+
+  /*
+   * Extra protection if somehow clicked.
+   */
+  noBtn.addEventListener("click", function (e) {
     e.preventDefault();
+    e.stopPropagation();
     moveNoButton();
   });
 
+
+  /*
+   * YES BUTTON
+   */
   function sayYes() {
-    document.getElementById("btnRow").style.display = "none";
+
+    btnRow.style.display = "none";
     hintText.style.display = "none";
     noBtn.style.display = "none";
+
     document.getElementById("result").style.display = "block";
 
-    // little confetti burst of hearts
+    // Heart confetti
     for (let i = 0; i < 30; i++) {
+
       const h = document.createElement("div");
+
       h.className = "heart";
-      h.textContent = heartsToUse[Math.floor(Math.random() * heartsToUse.length)];
+
+      h.textContent =
+        heartsToUse[
+          Math.floor(Math.random() * heartsToUse.length)
+        ];
+
       h.style.left = Math.random() * 100 + "vw";
-      h.style.fontSize = (16 + Math.random() * 24) + "px";
-      h.style.animationDuration = (3 + Math.random() * 4) + "s";
-      h.style.animationDelay = (Math.random() * 1.5) + "s";
+      h.style.fontSize = 16 + Math.random() * 24 + "px";
+      h.style.animationDuration = 3 + Math.random() * 4 + "s";
+      h.style.animationDelay = Math.random() * 1.5 + "s";
+
       document.body.appendChild(h);
     }
   }
